@@ -15,7 +15,7 @@
 from game import *
 from learningAgents import ReinforcementAgent
 from featureExtractors import *
-
+import numpy as np
 import gridworld
 
 import random,util,math
@@ -188,7 +188,7 @@ class ApproximateQAgent(PacmanQAgent):
        should work as is.
     """
     def __init__(self, extractor='IdentityExtractor', **args):
-        self.featExtractor = util.lookup(extractor, globals())()
+        self.featExtractor = util.lookup(extractor, globals())
         PacmanQAgent.__init__(self, **args)
         self.weights = util.Counter()
 
@@ -201,22 +201,35 @@ class ApproximateQAgent(PacmanQAgent):
           where * is the dotProduct operator
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        self.featExtractor = IdentityExtractor()
+
+        features = self.featExtractor.getFeatures(state, action)
+        qValue = sum(features[feature] * self.weights[feature] for feature in features)
+        return qValue
 
     def update(self, state, action, nextState, reward: float):
         """
            Should update your weights based on transition
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        self.featExtractor = IdentityExtractor()
+
+        #maxQNextState = max([self.getQValue(nextState, nextAction) for nextAction in self.getLegalActions(nextState)]) if self.getLegalActions(nextState) else 0
+        diff = (reward + self.discount*self.computeValueFromQValues(nextState)) - self.getQValue(state,action)
+        features = self.featExtractor.getFeatures(state,action)
+        for feature in features:
+            
+            self.weights[feature] += self.alpha *diff * features[feature]
+        return
 
     def final(self, state):
         """Called at the end of each game."""
         # call the super-class final method
         PacmanQAgent.final(self, state)
 
-        # did we finish training?
+        '''# did we finish training?
         if self.episodesSoFar == self.numTraining:
             # you might want to print your weights here for debugging
             "*** YOUR CODE HERE ***"
-            pass
+
+            pass'''
