@@ -17,6 +17,7 @@ import bayesNet
 import random
 import layout
 import hunters
+import inference
 from copy import deepcopy
 from tempfile import mkstemp
 import time

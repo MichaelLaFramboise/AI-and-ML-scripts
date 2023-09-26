@@ -102,7 +102,32 @@ def joinFactors(factors: List[Factor]):
 
 
     "*** YOUR CODE HERE ***"
-    raiseNotDefined()
+    factors = list(factors)
+    
+    unconditionedVariables = set()
+    allConditionedVariables = set()
+    variableDomainsDict = factors[0].variableDomainsDict()
+
+    # Determine unconditioned and conditioned variables
+    for factor in factors:
+        unconditionedVariables.update(factor.unconditionedVariables())
+        allConditionedVariables.update(factor.conditionedVariables())
+
+    # Conditioned variables that appear in more than one factor
+    conditionedVariables = allConditionedVariables - unconditionedVariables
+
+    # Create the new factor
+    newFactor = Factor(unconditionedVariables, conditionedVariables, variableDomainsDict)
+
+    # Calculate the probabilities
+    for assignment in newFactor.getAllPossibleAssignmentDicts():
+        probability = 1.0
+        for factor in factors:
+            probability *= factor.getProbability(assignment)
+        newFactor.setProbability(assignment, probability)
+
+    return newFactor
+    
     "*** END YOUR CODE HERE ***"
 
 ########### ########### ###########
@@ -153,7 +178,23 @@ def eliminateWithCallTracking(callTrackingList=None):
                     "unconditionedVariables: " + str(factor.unconditionedVariables()))
 
         "*** YOUR CODE HERE ***"
-        raiseNotDefined()
+        if eliminationVariable not in factor.unconditionedVariables() or len(factor.unconditionedVariables()) == 1:
+            raise ValueError("not cash money")
+        unconditionedVariables = set(factor.unconditionedVariables())
+        unconditionedVariables.remove(eliminationVariable)
+        conditionedVariables = set(factor.conditionedVariables())
+
+        variableDomainsDict = factor.variableDomainsDict()
+        newFactor = Factor(unconditionedVariables,conditionedVariables,variableDomainsDict)
+
+        for assignment in newFactor.getAllPossibleAssignmentDicts():
+            probability = 0.0
+            for value in variableDomainsDict[eliminationVariable]:
+                assignment[eliminationVariable] = value
+                probability += factor.getProbability(assignment)
+            newFactor.setProbability(assignment,probability)
+        return newFactor
+        
         "*** END YOUR CODE HERE ***"
 
     return eliminate
