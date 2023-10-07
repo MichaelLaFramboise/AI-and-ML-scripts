@@ -1,5 +1,6 @@
 import nn
-
+import numpy
+import matplotlib
 class PerceptronModel(object):
     def __init__(self, dimensions):
         """
@@ -27,6 +28,7 @@ class PerceptronModel(object):
         Returns: a node containing a single number (the score)
         """
         "*** YOUR CODE HERE ***"
+        return nn.DotProduct(self.w,x)
 
     def get_prediction(self, x):
         """
@@ -35,12 +37,21 @@ class PerceptronModel(object):
         Returns: 1 or -1
         """
         "*** YOUR CODE HERE ***"
-
+        return 1 if nn.as_scalar(nn.DotProduct(self.w,x)) >=0 else -1
+    
     def train(self, dataset):
         """
         Train the perceptron until convergence.
         """
         "*** YOUR CODE HERE ***"
+        convergence = False
+        while not convergence:
+            convergence = True
+            for x, y in dataset.iterate_once(1):
+                if nn.as_scalar(y) != self.get_prediction(x):
+                        self.w.update(x,nn.as_scalar(y))
+                        convergence = False
+    ...     
 
 class RegressionModel(object):
     """
@@ -51,6 +62,13 @@ class RegressionModel(object):
     def __init__(self):
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        self.batch_size = 200
+        self.w0 = nn.Parameter(1,200)
+        self.b0 = nn.Parameter(1,200)
+        self.w1 = nn.Parameter(200, 1)
+        self.b1 = nn.Parameter(1, 1)
+        self.alpha = 0.07
+
 
     def run(self, x):
         """
@@ -63,6 +81,12 @@ class RegressionModel(object):
         """
         "*** YOUR CODE HERE ***"
 
+        xw0 = nn.Linear(x,self.w0)
+        r1 = nn.ReLU(nn.AddBias(xw0,self.b0))
+        xw1 = nn.Linear(r1,self.w1)
+        pred = nn.AddBias(xw1,self.b1)
+        return pred
+        
     def get_loss(self, x, y):
         """
         Computes the loss for a batch of examples.
@@ -74,13 +98,23 @@ class RegressionModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
-
+        return nn.SquareLoss(self.run(x), y)
+        
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
-
+        while True:
+            for x,y in dataset.iterate_once(self.batch_size):
+                loss = self.get_loss(x,y)
+                gradients = nn.gradients(loss, [self.w0,self.b0,self.w1,self.b1])
+                self.w0.update(gradients[0], -self.alpha)
+                self.b0.update(gradients[1], -self.alpha)
+                self.w1.update(gradients[2], -self.alpha)
+                self.b1.update(gradients[3], -self.alpha)
+            if nn.as_scalar(self.get_loss(nn.Constant(dataset.x),nn.Constant(dataset.y))) < 0.01:
+                return
 class DigitClassificationModel(object):
     """
     A model for handwritten digit classification using the MNIST dataset.

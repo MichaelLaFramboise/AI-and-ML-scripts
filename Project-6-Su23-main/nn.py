@@ -219,6 +219,11 @@ class Linear(FunctionNode):
         assert gradient.shape[0] == inputs[0].shape[0]
         assert gradient.shape[1] == inputs[1].shape[1]
         "*** YOUR CODE HERE (Q2) ***"
+        
+        x1 = np.dot(gradient,inputs[1].T)
+        x2 = np.dot(inputs[0].T,gradient)
+        return [x1,x2]
+
 
 class ReLU(FunctionNode):
     """
@@ -248,6 +253,10 @@ class ReLU(FunctionNode):
         """
         assert gradient.shape == inputs[0].shape
         "*** YOUR CODE HERE (Q3) ***"
+        downstreamGrad = np.where(inputs[0]>0,gradient,0)
+        return downstreamGrad
+
+        
 
 class SquareLoss(FunctionNode):
     """
@@ -279,6 +288,7 @@ class SquareLoss(FunctionNode):
     def _backward(gradient, *inputs):
         assert np.asarray(gradient).ndim == 0
         "*** YOUR CODE HERE (Q4) ***"
+        return [ gradient*(inputs[0] - inputs[1])/inputs[0].size,gradient*(inputs[1] - inputs[0])/inputs[0].size ]
 
 class SoftmaxLoss(FunctionNode):
     """
@@ -336,6 +346,10 @@ class SoftmaxLoss(FunctionNode):
         assert np.asarray(gradient).ndim == 0
         log_probs = SoftmaxLoss.log_softmax(inputs[0])  # may be helpful
         "*** YOUR CODE HERE (Q5) ***"
+        return [
+            gradient * (np.exp(log_probs) - inputs[1]) / inputs[0].shape[0],
+            gradient * -log_probs / inputs[0].shape[0]
+        ]
 
 def gradients(loss, parameters):
     """
