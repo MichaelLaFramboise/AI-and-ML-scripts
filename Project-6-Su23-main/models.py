@@ -229,6 +229,21 @@ class LanguageIDModel(object):
 
         # Initialize your model parameters here
         "*** YOUR CODE HERE ***"
+        '''self.batch_size = 1
+        param = 300
+        self.w0 = nn.Parameter(784,param)
+        self.b0 = nn.Parameter(1,param)
+        self.w1 = nn.Parameter(param, 10)
+        self.b1 = nn.Parameter(1, 10)
+        self.alpha = 0.005
+        self.prams = [self.w0,self.b0,self.w1,self.b1]'''
+        self.alpha = 0.005
+        self.dim = 5
+        self.batch_size = 2
+        self.hidden = 400
+        self.w = nn.Parameter(self.num_chars,self.hidden)
+        self.wh = nn.Parameter(self.hidden,self.hidden)
+        self.wx = nn.Parameter(self.hidden,self.dim)
 
     def run(self, xs):
         """
@@ -260,7 +275,21 @@ class LanguageIDModel(object):
                 (also called logits)
         """
         "*** YOUR CODE HERE ***"
-
+        '''
+        xw0 = nn.Linear(x,self.w0)
+        r1 = nn.ReLU(nn.AddBias(xw0,self.b0))
+        xw1 = nn.Linear(r1,self.w1)
+        pred = nn.AddBias(xw1,self.b1)
+        return pred
+        '''
+        
+        
+        zh = nn.Linear(xs[0],self.w)
+        z = zh
+        for i,x in enumerate(xs[1:]):
+            z = nn.Add(nn.Linear(x,self.w),nn.Linear(z,self.wh))
+        return nn.Linear(z, self.wx)
+        
     def get_loss(self, xs, y):
         """
         Computes the loss for a batch of examples.
@@ -276,9 +305,25 @@ class LanguageIDModel(object):
         Returns: a loss node
         """
         "*** YOUR CODE HERE ***"
+        return nn.SoftmaxLoss(self.run(xs),y)
+        
 
     def train(self, dataset):
         """
         Trains the model.
         """
         "*** YOUR CODE HERE ***"
+        while True:
+            for x, y in dataset.iterate_once(self.batch_size):
+                    loss = self.get_loss(x,y)
+                    grad = nn.gradients(loss, [self.w, self.wh, self.wx])
+
+                    #print(nn.as_scalar(nn.DotProduct(grad[0],grad[0])))
+                    self.w.update(grad[0], -self.alpha)
+                    self.wh.update(grad[1], -self.alpha)
+                    self.wx.update(grad[2], -self.alpha)
+                    
+
+            print(dataset.get_validation_accuracy())
+            if dataset.get_validation_accuracy() >= 0.81:
+                return
